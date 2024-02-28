@@ -20,4 +20,4 @@ services:
       - "3000:3000"
     restart: always
 
-    #psql -U postgres -d icct -h db -p 5432
+    #psql -U root -d icct -h db -p 5432

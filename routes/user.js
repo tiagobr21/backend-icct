@@ -12,7 +12,7 @@ const bcrypt = require('bcrypt');
 
 // Registrar Usuário
 
-router.post('/signup', async (req, res) => {
+router.post('/register', async (req, res) => {
     try {
         let users = req.body;
         let query = "SELECT email FROM users WHERE email = $1 ";
@@ -61,9 +61,9 @@ router.post('/login', async (req, res) => {
             return res.status(200).json({
                 message: 'Usuário ' + results.rows[0].name + ' logado com sucesso',
                 id: results.rows[0].id,
-                users: results.rows[0].name,
+                name: results.rows[0].name,
+                email: results.rows[0].email,
                 role: results.rows[0].role,
-                url: results.rows[0].url,
                 token: accessToken
             });
         }
@@ -133,6 +133,7 @@ router.patch('/:id', auth.authenticateToken, checkRole.checkRole, async (req, re
     }
 });
 
+// Deletar Usuário
 
 router.delete('/:id', auth.authenticateToken, checkRole.checkRole, (req, res) => {
     let id = req.params.id;
@@ -150,76 +151,6 @@ router.delete('/:id', auth.authenticateToken, checkRole.checkRole, (req, res) =>
         }
     });
 });
-
-
-router.patch("/uploadimage/:id",  (req,res)=>{
-    console.log(req.file);
-
-     let url = req.file.location;
-     let id = req.params.id;
-     let query = 'update users set url = ? where id = ? ';
-
-    
-     connection.query(query,[url,id],(err,results)=>{
-        if(!err){
-          return res.status(200).json({message:'Imagem carregada com sucesso!'})
-        }else{
-          return res.status(500).json(err);
-        }
-    }); 
-    
- });
-
- router.get("/getimage/:id",auth.authenticateToken,(req,res)=>{
-
-    let id = req.params.id;
-    let query= 'select url from users where id = ? ';
-   
-        connection.query(query,[id],(err,results)=>{
-            if(!err){
-                return res.status(200).json(results)
-            }else{
-                return res.status(500).json(err);
-            } 
-        })
-   
-});
-
-
-
-
- router.delete('/deleteimage/:id',auth.authenticateToken,(req,res)=>{
-    
-    let id = req.params.id;
-    let queryImage = 'update users set url = null where id = ?';
-    let queryurl = 'select url from users where id = ?';
-    console.log(id )
-        connection.query(queryurl,[id],(err,url)=>{
-               connection.query(queryImage,[id],(err,results)=>{
-                if(!err){
-                    if(results.affectedRows == 0){
-                        res.status(404).json({message:"Usuário não encontrado"})
-                    }
-                    res.status(200).json({message:"Imagem deletada com sucesso !!!"})
-
-                    fs.rm(`tmp/uploads/${url[0].url}`, { recursive:true }, (err) => {
-                        if(err){
-                            // File deletion failed
-                            console.error(err.message);
-                            return;
-                        }
-                        console.log("File deleted successfully");
-                    })
-               
-                }else{
-                    res.status(500).json(err)
-                }
-            });   
-        });
- });
- 
-
-
 
 
 
@@ -329,6 +260,74 @@ router.post('/changePassword',auth.authenticateToken,(req,res)=>{
         }
     })
 })
+
+
+
+// Foto de perfil
+
+router.patch("/uploadimage/:id",  (req,res)=>{
+    console.log(req.file);
+
+     let url = req.file.location;
+     let id = req.params.id;
+     let query = 'update users set url = ? where id = ? ';
+
+    
+     connection.query(query,[url,id],(err,results)=>{
+        if(!err){
+          return res.status(200).json({message:'Imagem carregada com sucesso!'})
+        }else{
+          return res.status(500).json(err);
+        }
+    }); 
+    
+ });
+
+ router.get("/getimage/:id",auth.authenticateToken,(req,res)=>{
+
+    let id = req.params.id;
+    let query= 'select url from users where id = ? ';
+   
+        connection.query(query,[id],(err,results)=>{
+            if(!err){
+                return res.status(200).json(results)
+            }else{
+                return res.status(500).json(err);
+            } 
+        })
+   
+});
+
+ router.delete('/deleteimage/:id',auth.authenticateToken,(req,res)=>{
+    
+    let id = req.params.id;
+    let queryImage = 'update users set url = null where id = ?';
+    let queryurl = 'select url from users where id = ?';
+    console.log(id )
+        connection.query(queryurl,[id],(err,url)=>{
+               connection.query(queryImage,[id],(err,results)=>{
+                if(!err){
+                    if(results.affectedRows == 0){
+                        res.status(404).json({message:"Usuário não encontrado"})
+                    }
+                    res.status(200).json({message:"Imagem deletada com sucesso !!!"})
+
+                    fs.rm(`tmp/uploads/${url[0].url}`, { recursive:true }, (err) => {
+                        if(err){
+                            // File deletion failed
+                            console.error(err.message);
+                            return;
+                        }
+                        console.log("File deleted successfully");
+                    })
+               
+                }else{
+                    res.status(500).json(err)
+                }
+            });   
+        });
+ });
+ 
 
 
 module.exports = router;
