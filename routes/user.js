@@ -7,73 +7,149 @@ var checkRole = require('../services/checkRole');
 const nodemailer = require('nodemailer');
 let fs = require('fs');
 require('dotenv').config();
+const bcrypt = require('bcrypt');
 
 
 // Registrar Usuário
 
-router.post('/signup',(req,res)=>{
-   
-    let users = req.body;
-    let query = "SELECT email FROM users WHERE email= $1  "
-    connection.query(query,[users.email],(err,results)=>{
-     
-       if(!err){             
-            if(results.rows == 0){
-                
-            var query = "insert into users(name,email,password,role) values($1,$2,$3,'user')"
+router.post('/signup', async (req, res) => {
+    try {
+        let users = req.body;
+        let query = "SELECT email FROM users WHERE email = $1 ";
 
-                connection.query(query,[users.name,users.email,users.password],(err,results)=>{
-                   
-                    if(!err){
-                    return res.status(200).json({message:"Cadastrado com Sucesso"})
-                    }else{
-                    return res.status(500).json('error'+err)
-                    }
-                })
+        // Verificar se email existe
+        const emailCheckResults = await connection.query(query, [users.email]);
 
-            }else{
-            return res.status(400).json({message: "Email já Existe."}) 
-            }
-       }    
-         else{
-            return res.status(500).json(err);
+        if (emailCheckResults.rows.length === 0) {
+            // Criar o hash
+            const hashedPassword = await bcrypt.hash(users.password, 10);
+
+
+            // Criar usuário na base de dados
+            const insertQuery = "INSERT INTO users(name, email, password, role) VALUES($1, $2, $3, 'user')";
+            const insertResults = await connection.query(insertQuery, [users.name, users.email, hashedPassword]);
+
+            return res.status(200).json({ message: "Usuário cadastrado com sucesso !!!" });
+        } else {
+            return res.status(400).json({ message: "Email já Existe." });
         }
-    })
-})  
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json(err);
+    }
+});
+
 
 // Autenticar Usuário 
 
-router.post('/login',(req,res)=>{
+router.post('/login', async (req, res) => {
+    try {
 
-    const users = req.body;
-    let query = "select id,name,email,password,status,role,url from users where email = ?"
+        const users = req.body;
+        let query = "SELECT id, name, email, password, role FROM users WHERE email = $1";
 
-    connection.query(query, [users.email] , (err,results)=>{
+        // Fetch user from the database
+        const results = await connection.query(query, [users.email]);
+       
 
+        if (results.rows.length == 0 || !await bcrypt.compare(users.password, results.rows[0].password)) {
+            return res.status(401).json({ message: "Usuário ou Senha Incorreto" });
+        }  else {
+            const response = { email: results.rows[0].email, role: results.rows[0].role };
+            const accessToken = jwt.sign(response, process.env.ACCESS_TOKEN, { expiresIn: '8h' });
+
+            return res.status(200).json({
+                message: 'Usuário ' + results.rows[0].name + ' logado com sucesso',
+                id: results.rows[0].id,
+                users: results.rows[0].name,
+                role: results.rows[0].role,
+                url: results.rows[0].url,
+                token: accessToken
+            });
+        }
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json(err);
+    }
+});
+
+
+// Buscar todos os usuários
+
+router.get('/',auth.authenticateToken,checkRole.checkRole,(req,res)=>{
+    let query = "select id,name,email,password,role from users"
+    connection.query(query,(err,results)=>{
         if(!err){
-
-            if(results.length <=0 || results[0].password != users.password){
-                return res.status(401).json({mesagge:"Usuário ou Senha Incorreto"});
-
-
-            }else if(results[0].status === 'false'){
-
-                return res.status(404).json({message:"Espere o Administrador Aprovar"});
-
-            }else if(results[0].password == users.password){
-
-                const response = {email: results[0].email, role: results[0].role }
-                const accessToken = jwt.sign(response,process.env.ACCESS_TOKEN,{expiresIn:'8h'})
-                res.status(200).json({message:'Usuário '+ results[0].name +' logado com sucesso',id:results[0].id,users:results[0].name, role:results[0].role,url:results[0].url, token: accessToken})
-
-            }else{
-                return res.status(400).json({message: "Algo ocorreu errado, tente novamente mais tarde"});
-            }
+           return res.status(200).json(results);
         }else{
+           return res.status(500).json(err);
+        }
+    });
+});
+
+// Buscar por usuário
+
+router.get('/:id',auth.authenticateToken,checkRole.checkRole,(req,res)=>{
+    let id = req.params.id;
+    let query = "select * from users where id= $1";
+    connection.query(query,[id],(err,results)=>{
+        if(!err){
+            if(results.rows.length == 0){
+                res.status(404).json({message:'id não encontrado'});
+            }
+            return res.status(200).json(results.rows);
+        }else{
+            res.status(500).json(err);
+        }
+    });
+});
+
+// Atualizar Usuário
+
+router.patch('/:id', auth.authenticateToken, checkRole.checkRole, async (req, res) => {
+    try {
+        let id = req.params.id;
+        let users = req.body;
+
+        // Check if the user with the given id exists
+        const checkUserQuery = "SELECT * FROM users WHERE id = $1";
+        const userCheckResults = await connection.query(checkUserQuery, [id]);
+       
+
+        if (userCheckResults.rows.length == 0) {
+            return res.status(404).json({ message: "O Usuário não existe." });
+        }
+
+        const updateQuery = "UPDATE users SET name = $1, email = $2, password = $3, role = $4 WHERE id = $5";
+
+        const hashedPassword = await bcrypt.hash(users.password, 10);
+
+        await connection.query(updateQuery, [users.name, users.email, hashedPassword, users.role, id]);
+
+        return res.status(200).json({ message: "Usuário Atualizado com Sucesso!!!" });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json(err);
+    }
+});
+
+
+router.delete('/:id', auth.authenticateToken, checkRole.checkRole, (req, res) => {
+    let id = req.params.id;
+    let query = 'delete from users where id = $1';
+    connection.query(query, [id], (err, results) => {
+
+        if (!err) {
+            if (results.rowCount == 0) {
+                return res.status(404).json({ message: 'Usuário não encontrado' });
+            } else {
+                return res.status(200).json({ message: 'Usuário deletado com sucesso !!!' });
+            }
+        } else {
             return res.status(500).json(err);
         }
-    })
-})
+    });
+});
 
 
 router.patch("/uploadimage/:id",  (req,res)=>{
@@ -90,9 +166,9 @@ router.patch("/uploadimage/:id",  (req,res)=>{
         }else{
           return res.status(500).json(err);
         }
-    })  
+    }); 
     
- })
+ });
 
  router.get("/getimage/:id",auth.authenticateToken,(req,res)=>{
 
@@ -107,7 +183,8 @@ router.patch("/uploadimage/:id",  (req,res)=>{
             } 
         })
    
-})
+});
+
 
 
 
@@ -137,9 +214,9 @@ router.patch("/uploadimage/:id",  (req,res)=>{
                 }else{
                     res.status(500).json(err)
                 }
-            })   
-        }) 
- })
+            });   
+        });
+ });
  
 
 
@@ -216,67 +293,6 @@ router.post('/forgotpassword',(req,res)=>{
     })
 })      
 
-
-
-
-
-router.get('/get',auth.authenticateToken,checkRole.checkRole,(req,res)=>{
-    let query = "select id,name,email,password,role from users"
-    connection.query(query,(err,results)=>{
-        if(!err){
-           return res.status(200).json(results);
-        }else{
-           return res.status(500).json(err);
-        }
-    })
-})
-
-
-router.get('/getbyid/:id',auth.authenticateToken,checkRole.checkRole,(req,res)=>{
-    let id = req.params.id;
-    let query = ('select * from users where id=?');
-    connection.query(query,[id],(err,results)=>{
-      if(!err){
-        if(results.affectedRows==0){
-            res.status(404).json({message:'id não encontrado'});
-        }
-        return res.status(200).json(results);
-    }else{
-        res.status(500).json(err);
-    }
-  });
-  });
-
-router.patch('/updateuser/:id',auth.authenticateToken,checkRole.checkRole,(req,res)=>{
-    let id = req.params.id
-    let users = req.body;
-    let query = "update users set name=?, email=? , password=?, status=? , role=? where id=?"
-    connection.query(query,[users.name,users.email,users.password,users.status,users.role,id],(err,results)=>{
-        if(!err){
-          if(results.affectedRows == 0){
-            return res.status(404).json({message:"O Usuário não existe "});
-          }
-          return res.status(200).json({message:"Usuário Atualizado com Sucesso!!!"});
-        }else{
-          return res.status(500).json(err);
-        }
-    })
-});
-
-router.delete("/delete/:id",auth.authenticateToken,checkRole.checkRole,(req,res)=>{
-   let id = req.params.id
-   let query = 'delete from users where id = ?';
-   connection.query(query,[id],(err,results)=>{
-      if(!err){
-        if(results.affectedRows == 0){
-           res.status(404).json({mesagge:'usuário não encontrado'})
-        }
-        res.status(200).json({message:'Usuário deletado com sucesso !!!'})
-      }else{
-        res.status(500).json(err)
-      }
-   })
-})
 
 
 
