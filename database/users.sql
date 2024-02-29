@@ -7,3 +7,5 @@ CREATE TABLE "user" (
 );
 
 INSERT INTO users (name, email, password, role) VALUES ('Admin', 'tiagobrr17@gmail.com','1234567','admin');
+
+UPDATE users SET role = 'admin' WHERE id = [id_user]
