@@ -8,6 +8,7 @@ const nodemailer = require('nodemailer');
 let fs = require('fs');
 require('dotenv').config();
 const bcrypt = require('bcrypt');
+const { log } = require('console');
 
 
 
@@ -76,28 +77,60 @@ router.post('/login', async (req, res) => {
 
 // Buscar todos os usuários
 
-router.get('/',auth.authenticateToken,checkRole.checkRole,(req,res)=>{
-    let query = "select id,name,email,password,role from users"
-    connection.query(query,(err,results)=>{
-        if(!err){
-           return res.status(200).json(results);
-        }else{
-           return res.status(500).json(err);
-        }
-    });
+
+router.get('/', auth.authenticateToken, checkRole.checkRole, async (req, res) => {
+    const itemsPerPage = 2;
+    const currentPage = req.query.page || 1;
+    const offset = (currentPage - 1) * itemsPerPage;
+
+    try {
+        const query = `SELECT id, name, email, password, role FROM users LIMIT ${itemsPerPage} OFFSET ${offset}`;
+        connection.query(query, (err, results) => {
+            if (!err) {
+                connection.query('SELECT COUNT(*) FROM users', (err, countResult) => {
+            
+                    if (!err && countResult && countResult.rows) {
+
+                        const totalCount = countResult.rows[0].count;
+
+                        const totalPages = Math.ceil(totalCount / itemsPerPage);
+
+                        res.status(200).json({
+                            currentPage: currentPage,
+                            totalPages: totalPages,
+                            per_page: itemsPerPage,
+                            data: results,
+                            totalCount: totalCount
+                        });
+                    } else {
+                        console.error(err);
+                        res.status(500).json({ error: 'Error retrieving total count from the database' });
+                    }
+                });
+            } else {
+                console.error(err);
+                res.status(500).json({ error: 'Error querying the database' });
+            }
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
 });
+
 
 // Buscar por usuário
 
 router.get('/:id',auth.authenticateToken,checkRole.checkRole,(req,res)=>{
     let id = req.params.id;
-    let query = "select * from users where id= $1";
+  
+    let query = "SELECT * FROM users WHERE id= $1";
     connection.query(query,[id],(err,results)=>{
         if(!err){
             if(results.rows.length == 0){
                 res.status(404).json({message:'id não encontrado'});
             }
-            return res.status(200).json(results.rows);
+            return res.status(200).json(results.rows[0]);
         }else{
             res.status(500).json(err);
         }
@@ -107,6 +140,8 @@ router.get('/:id',auth.authenticateToken,checkRole.checkRole,(req,res)=>{
 // Atualizar Usuário
 
 router.patch('/:id', auth.authenticateToken, checkRole.checkRole, async (req, res) => {
+
+
     try {
         let id = req.params.id;
         let users = req.body;
@@ -122,9 +157,9 @@ router.patch('/:id', auth.authenticateToken, checkRole.checkRole, async (req, re
 
         const updateQuery = "UPDATE users SET name = $1, email = $2, password = $3, role = $4 WHERE id = $5";
 
-        const hashedPassword = await bcrypt.hash(users.password, 10);
+        const hashedPassword = await bcrypt.hash(users.user.password, 10);
 
-        await connection.query(updateQuery, [users.name, users.email, hashedPassword, users.role, id]);
+        await connection.query(updateQuery, [users.user.name, users.user.email, hashedPassword, users.user.role, id]);
 
         return res.status(200).json({ message: "Usuário Atualizado com Sucesso!!!" });
     } catch (err) {
