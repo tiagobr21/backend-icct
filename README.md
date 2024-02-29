@@ -55,7 +55,7 @@
      
      ```
 
-     * Agora vamos criar o usuario com a permissão admin:
+    * Agora vamos criar o usuario com a permissão admin:
 
      ```
      INSERT INTO users (name, email, password, role) VALUES ('Seu_Nome', 'seu_email','sua_senha','admin');
