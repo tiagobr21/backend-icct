@@ -155,11 +155,10 @@ router.patch('/:id', auth.authenticateToken, checkRole.checkRole, async (req, re
             return res.status(404).json({ message: "O Usuário não existe." });
         }
 
-        const updateQuery = "UPDATE users SET name = $1, email = $2, password = $3, role = $4 WHERE id = $5";
+        const updateQuery = "UPDATE users SET name = $1, email = $2, role = $3 WHERE id = $4";
 
-        const hashedPassword = await bcrypt.hash(users.user.password, 10);
 
-        await connection.query(updateQuery, [users.user.name, users.user.email, hashedPassword, users.user.role, id]);
+        await connection.query(updateQuery, [users.user.name, users.user.email, users.user.role, id]);
 
         return res.status(200).json({ message: "Usuário Atualizado com Sucesso!!!" });
     } catch (err) {
