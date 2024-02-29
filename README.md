@@ -55,9 +55,12 @@
      
      ```
 
-   * Agora vamos criar o usuario com a permissão admin:
+   * Agora crie um usuário na rota /register .
+   
+   * Após isso volte ao banco para atualizar a permissão do usuário que você criou para admin:
 
      ```
-     INSERT INTO users (name, email, password, role) VALUES ('Seu_Nome', 'seu_email','sua_senha','admin');
+     UPDATE users SET role = 'admin' WHERE id = [id_user]
 
      ```
+         obs: no caso o id será 1 pois é o primeiro usuário.  
