@@ -1,13 +1,22 @@
-1.**Instalando Dependências:**
+1.**Clonar o Projeto:**
+ 
+ * Para clonar o projeto execute o seguinte comando:
 
- * A primeira etapa consiste em instalar as dependências do projeto. Execute o comando a seguir para criar a pasta 'node_modules':
+    ```
+     git clone git@github.com:tiagobr21/backend-icct.git
+     
+     ```
+
+2.**Instalando Dependências:**
+
+ * A Segunda etapa consiste em instalar as dependências do projeto. Execute o comando a seguir para criar a pasta 'node_modules':
       
      ```
      npm install 
      
      ```
     
-2. **Iniciando o Ambiente Docker:**
+3. **Iniciando o Ambiente Docker:**
 
   * Após a instalação das dependências, inicie o serviço utilizando o seguinte comando para levantar o ambiente Docker:     
      
@@ -16,7 +25,7 @@
      
      ```
 
-3. **Criar tabela usuários:**
+4. **Criar tabela usuários:**
 
   * Identifique o ID do container do PostgreSQL usando o comando:
     
@@ -55,9 +64,12 @@
      
      ```
 
-   * Agora vamos criar o usuario com a permissão admin:
+   * Agora crie um usuário na rota /register .
+   
+   * Após isso volte ao banco para atualizar a permissão do usuário que você criou para admin:
 
      ```
-     INSERT INTO users (name, email, password, role) VALUES ('Seu_Nome', 'seu_email','sua_senha','admin');
+     UPDATE users SET role = 'admin' WHERE id = [id_user]
 
      ```
+         obs: no caso o id será 1 pois é o primeiro usuário.  
