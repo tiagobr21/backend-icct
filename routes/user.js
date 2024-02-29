@@ -10,6 +10,7 @@ require('dotenv').config();
 const bcrypt = require('bcrypt');
 
 
+
 // Registrar Usuário
 
 router.post('/register', async (req, res) => {
@@ -72,7 +73,6 @@ router.post('/login', async (req, res) => {
         return res.status(500).json(err);
     }
 });
-
 
 // Buscar todos os usuários
 
@@ -227,9 +227,6 @@ router.post('/forgotpassword',(req,res)=>{
 
 
 
-router.get('/checkToken',auth.authenticateToken,(req,res)=>{
-    return res.status(200).json({message:"true"});
-})
 
 router.post('/changePassword',auth.authenticateToken,(req,res)=>{
     const users = req.body;
