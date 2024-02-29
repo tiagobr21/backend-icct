@@ -5,10 +5,13 @@ require('dotenv').config();
 const axios = require('axios');
 let checkRole = require('../services/checkRole');
 
+// Endpoint
+
+const api = 'http://54.167.117.206:8000/livro';
 
 // Obter todos os livros
 
-const api = 'http://54.167.117.206:8000/livro';
+
 const itemsPerPage = 6;
 
 router.get('/', auth.authenticateToken, async (req, res) => {
