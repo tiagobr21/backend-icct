@@ -77,4 +77,5 @@
 
      ```
          obs: * no caso o id será 1 pois é o primeiro usuário.
-              * o sudo deve ser usado no caso do docker ou npm não tiverem permissões 
+              * o sudo deve ser usado no caso do docker ou npm não tiverem permissões.
+              * não esquecer do ; no Postgresql 
