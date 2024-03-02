@@ -21,6 +21,8 @@
   * Após a instalação das dependências, inicie o serviço utilizando o seguinte comando para levantar o ambiente Docker:     
      
      ```
+     sudo service docker start
+     
      docker-compose up -d
      
      ```
