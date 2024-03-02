@@ -66,7 +66,7 @@
      
      ```
 
-   * Agora crie um usuário na rota /register .
+   * Agora crie um usuário na rota /register no *front-end* .
    
    * Após isso volte ao banco para atualizar a permissão do usuário que você criou para admin:
 
