@@ -74,4 +74,5 @@
      UPDATE users SET role = 'admin' WHERE id = [id_user];
 
      ```
-         obs: no caso o id será 1 pois é o primeiro usuário.  
+         obs: * no caso o id será 1 pois é o primeiro usuário.
+              * o sudo deve ser usado no caso do docker ou npm não tiverem permissões 
