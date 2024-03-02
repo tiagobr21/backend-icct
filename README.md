@@ -71,7 +71,7 @@
    * Após isso volte ao banco para atualizar a permissão do usuário que você criou para admin:
 
      ```
-     UPDATE users SET role = 'admin' WHERE id = [id_user]
+     UPDATE users SET role = 'admin' WHERE id = [id_user];
 
      ```
          obs: no caso o id será 1 pois é o primeiro usuário.  
