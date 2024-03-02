@@ -1,3 +1,5 @@
+** IMPORTANTE: O FRONT-END DEVE ESTÁ NO AR PARA PODER CRIAR O USUÁRIO DO SISTEMA NO PASSO 4 **
+
 1.**Clonar o Projeto:**
  
  * Para clonar o projeto execute o seguinte comando:
@@ -21,6 +23,8 @@
   * Após a instalação das dependências, inicie o serviço utilizando o seguinte comando para levantar o ambiente Docker:     
      
      ```
+     sudo service docker start
+     
      docker-compose up -d
      
      ```
@@ -64,12 +68,14 @@
      
      ```
 
-   * Agora crie um usuário na rota /register .
+   * Agora crie um usuário na rota /register no *front-end* .
    
    * Após isso volte ao banco para atualizar a permissão do usuário que você criou para admin:
 
      ```
-     UPDATE users SET role = 'admin' WHERE id = [id_user]
+     UPDATE users SET role = 'admin' WHERE id = [id_user];
 
      ```
-         obs: no caso o id será 1 pois é o primeiro usuário.  
+         obs: * no caso o id será 1 pois é o primeiro usuário.
+              * o sudo deve ser usado no caso do docker ou npm não tiverem permissões.
+              * não esquecer do ; no Postgresql 
