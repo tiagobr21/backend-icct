@@ -1,3 +1,5 @@
+**IMPORTANTE: O FRONT-END DEVE ESTÁ NO AR PARA PODER CRIAR O USUÁRIO DO SISTEMA NO PASSO 4
+
 1.**Clonar o Projeto:**
  
  * Para clonar o projeto execute o seguinte comando:
