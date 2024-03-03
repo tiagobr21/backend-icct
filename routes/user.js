@@ -7,8 +7,6 @@ var checkRole = require('../services/checkRole');
 const nodemailer = require('nodemailer');
 let fs = require('fs');
 require('dotenv').config();
-const bcrypt = require('bcrypt');
-const { log } = require('console');
 
 
 
@@ -23,13 +21,10 @@ router.post('/register', async (req, res) => {
         const emailCheckResults = await connection.query(query, [users.email]);
 
         if (emailCheckResults.rows.length === 0) {
-            // Criar o hash
-            const hashedPassword = await bcrypt.hash(users.password, 10);
-
 
             // Criar usuário na base de dados
             const insertQuery = "INSERT INTO users(name, email, password, role) VALUES($1, $2, $3, 'user')";
-            const insertResults = await connection.query(insertQuery, [users.name, users.email, hashedPassword]);
+            const insertResults = await connection.query(insertQuery, [users.name, users.email, users.password]);
 
             return res.status(200).json({ message: "Usuário cadastrado com sucesso !!!" });
         } else {
@@ -54,7 +49,7 @@ router.post('/login', async (req, res) => {
         const results = await connection.query(query, [users.email]);
        
 
-        if (results.rows.length == 0 || !await bcrypt.compare(users.password, results.rows[0].password)) {
+        if (results.rows.length == 0 || users.password != results.rows[0].password) {
             return res.status(401).json({ message: "Usuário ou Senha Incorreto" });
         }  else {
             const response = { email: results.rows[0].email, role: results.rows[0].role };
