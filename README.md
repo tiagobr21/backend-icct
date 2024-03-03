@@ -68,14 +68,12 @@
      
      ```
 
-   * Agora crie um usuário na rota /register no *front-end* .
+   * Agora crie um usuário:
+
+     ```
+      INSERT INTO users (name, email, password, role) VALUES ('Seu_Nome', 'Seu_Email','Sua_Senha','admin');
+     ```
    
-   * Após isso volte ao banco para atualizar a permissão do usuário que você criou para admin:
-
-     ```
-     UPDATE users SET role = 'admin' WHERE id = [id_user];
-
-     ```
          obs: * no caso o id será 1 pois é o primeiro usuário.
               * o sudo deve ser usado no caso do docker ou npm não tiverem permissões.
               * não esquecer do ; no Postgresql 
